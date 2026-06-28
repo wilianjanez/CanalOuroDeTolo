@@ -103,20 +103,37 @@ const run = async () => {
 
   const elevenKey = process.env.ELEVENLABS_API_KEY;
 
-  if (elevenKey) {
-    console.log('Backend: ElevenLabs');
-    const voiceIdLongo = process.env.ELEVENLABS_VOICE_ID_LONGO;
-    const voiceIdShort = process.env.ELEVENLABS_VOICE_ID_SHORT || voiceIdLongo;
-    if (!voiceIdLongo) throw new Error('Falta ELEVENLABS_VOICE_ID_LONGO');
-    await synthesizeEleven(props.roteiro_longo, voiceIdLongo, path.join(PUB, 'audio/longo.mp3'), elevenKey);
-    await synthesizeEleven(props.roteiro_short, voiceIdShort, path.join(PUB, 'audio/short.mp3'), elevenKey);
-  } else {
-    console.log('Backend: edge-tts (Microsoft Neural, grátis)');
-    const voiceLongo = process.env.EDGE_TTS_VOICE_LONGO || 'pt-BR-AntonioNeural';
-    const voiceShort = process.env.EDGE_TTS_VOICE_SHORT || voiceLongo;
-    await synthesizeEdge(props.roteiro_longo, voiceLongo, path.join(PUB, 'audio/longo.mp3'));
-    await synthesizeEdge(props.roteiro_short, voiceShort, path.join(PUB, 'audio/short.mp3'));
-  }
+  const voiceLongo = process.env.EDGE_TTS_VOICE_LONGO || 'pt-BR-AntonioNeural';
+  const voiceShort = process.env.EDGE_TTS_VOICE_SHORT || voiceLongo;
+
+  const withEdgeFallback = async (label, elevenFn, edgeText, edgeDest, edgeVoice) => {
+    if (elevenKey) {
+      try {
+        await elevenFn();
+        return;
+      } catch (e) {
+        console.warn(`ElevenLabs falhou para ${label}: ${e.message}`);
+        console.warn('Caindo para edge-tts...');
+      }
+    }
+    await synthesizeEdge(edgeText, edgeVoice, edgeDest);
+  };
+
+  const longoPath = path.join(PUB, 'audio/longo.mp3');
+  const shortPath = path.join(PUB, 'audio/short.mp3');
+  const voiceIdLongo = process.env.ELEVENLABS_VOICE_ID_LONGO;
+  const voiceIdShort = process.env.ELEVENLABS_VOICE_ID_SHORT || voiceIdLongo;
+
+  await withEdgeFallback(
+    'longo',
+    () => synthesizeEleven(props.roteiro_longo, voiceIdLongo, longoPath, elevenKey),
+    props.roteiro_longo, longoPath, voiceLongo,
+  );
+  await withEdgeFallback(
+    'short',
+    () => synthesizeEleven(props.roteiro_short, voiceIdShort, shortPath, elevenKey),
+    props.roteiro_short, shortPath, voiceShort,
+  );
 };
 
 run().catch((e) => {
