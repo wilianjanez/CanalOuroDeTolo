@@ -13,7 +13,12 @@ const run = async () => {
     return;
   }
 
-  const result = JSON.parse(await fsp.readFile(path.join(BUILD, 'upload-result.json'), 'utf8'));
+  let result = {};
+  try {
+    result = JSON.parse(await fsp.readFile(path.join(BUILD, 'upload-result.json'), 'utf8'));
+  } catch (_) {
+    console.log('upload-result.json não encontrado — enviando notificação sem links do Drive');
+  }
 
   let youtubeResult = null;
   try {
@@ -33,7 +38,10 @@ const run = async () => {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error(`Callback do Make falhou: ${res.status}`);
+  if (!res.ok) {
+    console.warn(`Aviso: Callback do Make retornou ${res.status} — verifique se o webhook está ativo`);
+    return;
+  }
   console.log('Make avisado. row_id:', result.row_id);
 };
 

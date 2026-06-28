@@ -87,6 +87,15 @@ const run = async () => {
 };
 
 run().catch((e) => {
-  console.error(e);
+  // Exibe o motivo exato da API do YouTube (ex: youtubeSignupRequired, forbidden…)
+  if (e?.errors?.length) {
+    console.error('YouTube API error:');
+    for (const err of e.errors) {
+      console.error(`  reason: ${err.reason}  message: ${err.message}  domain: ${err.domain}`);
+    }
+    console.error(`  status: ${e.code ?? e.status}`);
+  } else {
+    console.error(e);
+  }
   process.exit(1);
 });
