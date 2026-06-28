@@ -1,0 +1,10 @@
+node_modules/
+out/
+tmp/
+build/
+whisper.cpp/
+public/audio/
+public/clips/
+public/captions/
+props.json
+.DS_Store

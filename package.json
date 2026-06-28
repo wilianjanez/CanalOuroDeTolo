@@ -1,0 +1,36 @@
+{
+  "name": "ouro-de-tolo-render",
+  "version": "1.0.0",
+  "description": "Motor de render do canal Ouro de Tolo — gera video longo 16:9 e Short 9:16 a partir de audio + clipes + legendas.",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio",
+    "fetch": "node scripts/fetch-assets.mjs",
+    "transcribe": "node scripts/transcribe.mjs",
+    "render": "node scripts/render.mjs",
+    "upload": "node scripts/upload-drive.mjs",
+    "notify": "node scripts/notify-make.mjs",
+    "pipeline": "node scripts/fetch-assets.mjs && node scripts/transcribe.mjs && node scripts/render.mjs && node scripts/upload-drive.mjs && node scripts/notify-make.mjs"
+  },
+  "dependencies": {
+    "@remotion/bundler": "^4.0.190",
+    "@remotion/captions": "^4.0.190",
+    "@remotion/cli": "^4.0.190",
+    "@remotion/google-fonts": "^4.0.190",
+    "@remotion/install-whisper-cpp": "^4.0.190",
+    "@remotion/media-utils": "^4.0.190",
+    "@remotion/renderer": "^4.0.190",
+    "googleapis": "^140.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.190",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

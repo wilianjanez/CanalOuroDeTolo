@@ -1,0 +1,18 @@
+{
+  "row_id": "12",
+  "titulo_longo": "Consorcio nao e investimento — veja o que voce perde",
+  "titulo_short": "Consorcio e cilada? #shorts",
+  "veredicto": "PIRITA",
+  "gancho_short": "Voce acha que consorcio e investimento?",
+  "audio_longo_url": "https://exemplo.com/longo.mp3",
+  "audio_short_url": "https://exemplo.com/short.mp3",
+  "clipes_longo": [
+    "https://videos.pexels.com/.../clip1.mp4",
+    "https://videos.pexels.com/.../clip2.mp4",
+    "https://videos.pexels.com/.../clip3.mp4"
+  ],
+  "clipes_short": [
+    "https://videos.pexels.com/.../short1.mp4",
+    "https://videos.pexels.com/.../short2.mp4"
+  ]
+}

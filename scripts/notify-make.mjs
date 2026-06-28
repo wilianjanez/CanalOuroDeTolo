@@ -1,0 +1,28 @@
+// Avisa o Make.com que os videos ficaram prontos, devolvendo os links do Drive
+// e o row_id da planilha. O Make retoma daqui (Canva + YouTube + atualizar Sheets).
+import fsp from 'node:fs/promises';
+import path from 'node:path';
+
+const ROOT = process.cwd();
+const BUILD = path.join(ROOT, 'build');
+
+const run = async () => {
+  const url = process.env.MAKE_CALLBACK_URL;
+  if (!url) throw new Error('Falta MAKE_CALLBACK_URL');
+
+  const result = JSON.parse(await fsp.readFile(path.join(BUILD, 'upload-result.json'), 'utf8'));
+  const payload = {...result, status: 'rendered'};
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`Callback do Make falhou: ${res.status}`);
+  console.log('Make avisado. row_id:', result.row_id);
+};
+
+run().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
