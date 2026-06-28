@@ -53,6 +53,16 @@ jobs:
 
       # ── Fase de criação de conteúdo (modo automático com "tema") ──────────
 
+      - name: Verificar secrets
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: |
+          echo "ANTHROPIC_API_KEY: ${#ANTHROPIC_API_KEY} chars"
+          echo "ELEVENLABS_API_KEY: ${#ELEVENLABS_API_KEY} chars"
+          echo "PEXELS_API_KEY: ${#PEXELS_API_KEY} chars"
+
       - name: Gerar roteiro com IA
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
