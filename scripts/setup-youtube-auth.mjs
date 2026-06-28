@@ -20,7 +20,10 @@ const auth = new google.auth.OAuth2(clientId, clientSecret, REDIRECT);
 
 const authUrl = auth.generateAuthUrl({
   access_type: 'offline',
-  scope: ['https://www.googleapis.com/auth/youtube.upload'],
+  scope: [
+    'https://www.googleapis.com/auth/youtube.upload',
+    'https://www.googleapis.com/auth/drive.file',
+  ],
   prompt: 'consent',
 });
 

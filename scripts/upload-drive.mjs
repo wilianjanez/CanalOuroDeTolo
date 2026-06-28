@@ -1,5 +1,5 @@
 // Sobe out/longo.mp4 e out/short.mp4 para uma pasta do Google Drive
-// usando uma conta de servico (Secret GDRIVE_SA_JSON) e GDRIVE_FOLDER_ID.
+// usando OAuth2 do usuario (mesmos secrets do YouTube) e GDRIVE_FOLDER_ID.
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
@@ -10,17 +10,18 @@ const OUT = path.join(ROOT, 'out');
 const BUILD = path.join(ROOT, 'build');
 
 const run = async () => {
-  const saJson = process.env.GDRIVE_SA_JSON;
+  const clientId = process.env.YOUTUBE_CLIENT_ID;
+  const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
+  const refreshToken = process.env.YOUTUBE_REFRESH_TOKEN;
   const folderId = process.env.GDRIVE_FOLDER_ID;
-  if (!saJson || !folderId) {
-    console.log('GDRIVE_SA_JSON / GDRIVE_FOLDER_ID não configurados — pulando upload para o Drive');
+
+  if (!clientId || !clientSecret || !refreshToken || !folderId) {
+    console.log('Credenciais OAuth2 ou GDRIVE_FOLDER_ID não configurados — pulando upload para o Drive');
     return;
   }
 
-  const auth = new google.auth.GoogleAuth({
-    credentials: JSON.parse(saJson),
-    scopes: ['https://www.googleapis.com/auth/drive.file'],
-  });
+  const auth = new google.auth.OAuth2(clientId, clientSecret, 'http://localhost');
+  auth.setCredentials({refresh_token: refreshToken});
   const drive = google.drive({version: 'v3', auth});
 
   const props = JSON.parse(await fsp.readFile(path.join(ROOT, 'props.json'), 'utf8'));
@@ -28,7 +29,6 @@ const run = async () => {
 
   const upload = async (file, label) => {
     const res = await drive.files.create({
-      supportsAllDrives: true,
       requestBody: {name: `${stamp}_${props.row_id}_${label}.mp4`, parents: [folderId]},
       media: {mimeType: 'video/mp4', body: fs.createReadStream(path.join(OUT, file))},
       fields: 'id, webViewLink, webContentLink',
