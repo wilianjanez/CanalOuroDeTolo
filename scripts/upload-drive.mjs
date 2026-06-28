@@ -28,6 +28,7 @@ const run = async () => {
 
   const upload = async (file, label) => {
     const res = await drive.files.create({
+      supportsAllDrives: true,
       requestBody: {name: `${stamp}_${props.row_id}_${label}.mp4`, parents: [folderId]},
       media: {mimeType: 'video/mp4', body: fs.createReadStream(path.join(OUT, file))},
       fields: 'id, webViewLink, webContentLink',
