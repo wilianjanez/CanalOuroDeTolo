@@ -8,7 +8,10 @@ const BUILD = path.join(ROOT, 'build');
 
 const run = async () => {
   const url = process.env.MAKE_CALLBACK_URL;
-  if (!url) throw new Error('Falta MAKE_CALLBACK_URL');
+  if (!url) {
+    console.log('MAKE_CALLBACK_URL não configurado — pulando notificação do Make');
+    return;
+  }
 
   const result = JSON.parse(await fsp.readFile(path.join(BUILD, 'upload-result.json'), 'utf8'));
 

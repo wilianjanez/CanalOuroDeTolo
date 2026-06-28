@@ -12,7 +12,10 @@ const BUILD = path.join(ROOT, 'build');
 const run = async () => {
   const saJson = process.env.GDRIVE_SA_JSON;
   const folderId = process.env.GDRIVE_FOLDER_ID;
-  if (!saJson || !folderId) throw new Error('Faltam GDRIVE_SA_JSON e/ou GDRIVE_FOLDER_ID');
+  if (!saJson || !folderId) {
+    console.log('GDRIVE_SA_JSON / GDRIVE_FOLDER_ID não configurados — pulando upload para o Drive');
+    return;
+  }
 
   const auth = new google.auth.GoogleAuth({
     credentials: JSON.parse(saJson),
