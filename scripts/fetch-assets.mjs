@@ -23,7 +23,19 @@ const probeDuration = (file) => {
   return parseFloat(String(r.stdout).trim()) || 60;
 };
 
+const fileExists = (p) => fs.existsSync(p);
+
 const download = async (url, dest) => {
+  // Pula se já existe (gerado por generate-audio ou fetch-clips)
+  if (fileExists(dest)) {
+    console.log(`[cache] ${path.relative(ROOT, dest)}`);
+    return;
+  }
+  // Pula se não é URL remota (ex: "local" ou path relativo)
+  if (!url.startsWith('http')) {
+    console.log(`[skip] ${url}`);
+    return;
+  }
   await fsp.mkdir(path.dirname(dest), {recursive: true});
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Download falhou ${res.status}: ${url}`);

@@ -11,7 +11,19 @@ const run = async () => {
   if (!url) throw new Error('Falta MAKE_CALLBACK_URL');
 
   const result = JSON.parse(await fsp.readFile(path.join(BUILD, 'upload-result.json'), 'utf8'));
-  const payload = {...result, status: 'rendered'};
+
+  let youtubeResult = null;
+  try {
+    youtubeResult = JSON.parse(await fsp.readFile(path.join(BUILD, 'youtube-result.json'), 'utf8'));
+  } catch (_) {
+    // YouTube não configurado — ignora
+  }
+
+  const payload = {
+    ...result,
+    status: 'rendered',
+    ...(youtubeResult && {youtube: youtubeResult}),
+  };
 
   const res = await fetch(url, {
     method: 'POST',

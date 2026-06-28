@@ -1,18 +1,29 @@
 {
-  "row_id": "12",
-  "titulo_longo": "Consorcio nao e investimento — veja o que voce perde",
-  "titulo_short": "Consorcio e cilada? #shorts",
+  "_modos": "Use o modo automático sempre que possível. Modo manual é fallback para quando você já tem áudio/clipes prontos.",
+
+  "_modo_automatico": "Só tema + veredicto — o pipeline gera roteiro (Claude), áudio (ElevenLabs) e clipes (Pexels) automaticamente.",
+  "row_id": "consorcio-001",
+  "tema": "Consórcio é investimento ou cilada?",
   "veredicto": "PIRITA",
-  "gancho_short": "Voce acha que consorcio e investimento?",
-  "audio_longo_url": "https://exemplo.com/longo.mp3",
-  "audio_short_url": "https://exemplo.com/short.mp3",
-  "clipes_longo": [
-    "https://videos.pexels.com/.../clip1.mp4",
-    "https://videos.pexels.com/.../clip2.mp4",
-    "https://videos.pexels.com/.../clip3.mp4"
-  ],
-  "clipes_short": [
-    "https://videos.pexels.com/.../short1.mp4",
-    "https://videos.pexels.com/.../short2.mp4"
-  ]
+
+  "_modo_manual_comentario": "Remova os campos acima e use os abaixo para fornecer áudio e clipes já prontos.",
+  "_modo_manual": {
+    "row_id": "consorcio-001",
+    "titulo_longo": "Consórcio não é investimento — veja o que você perde",
+    "titulo_short": "Consórcio é cilada? #shorts",
+    "veredicto": "PIRITA",
+    "gancho_short": "Você acha que consórcio é investimento?",
+    "descricao_youtube_longo": "Descrição do vídeo...",
+    "descricao_youtube_short": "Descrição do short... #shorts",
+    "tags": ["consorcio", "financas", "investimento"],
+    "audio_longo_url": "https://exemplo.com/longo.mp3",
+    "audio_short_url": "https://exemplo.com/short.mp3",
+    "clipes_longo": [
+      "https://videos.pexels.com/.../clip1.mp4",
+      "https://videos.pexels.com/.../clip2.mp4"
+    ],
+    "clipes_short": [
+      "https://videos.pexels.com/.../short1.mp4"
+    ]
+  }
 }

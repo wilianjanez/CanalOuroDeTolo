@@ -3,6 +3,9 @@ name: render-ouro-de-tolo
 # Disparado pelo Make.com via POST em:
 #   https://api.github.com/repos/<owner>/<repo>/dispatches
 #   { "event_type": "render", "client_payload": { ...props... } }
+#
+# Modo automático (tema): client_payload = { "row_id": "...", "tema": "...", "veredicto": "PIRITA" }
+# Modo manual (URLs): client_payload com audio_longo_url, audio_short_url, clipes_longo[], clipes_short[]
 on:
   repository_dispatch:
     types: [render]
@@ -19,7 +22,7 @@ concurrency:
 jobs:
   render:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -48,22 +51,56 @@ jobs:
           PAYLOAD: ${{ github.event.client_payload.row_id && toJSON(github.event.client_payload) || github.event.inputs.payload }}
         run: printf '%s' "$PAYLOAD" > props.json
 
-      - name: Baixar audio e clipes
+      # ── Fase de criação de conteúdo (modo automático com "tema") ──────────
+
+      - name: Gerar roteiro com IA
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL || 'claude-sonnet-4-6' }}
+        run: npm run generate-content
+
+      - name: Gerar narração (ElevenLabs)
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID_LONGO: ${{ secrets.ELEVENLABS_VOICE_ID_LONGO }}
+          ELEVENLABS_VOICE_ID_SHORT: ${{ secrets.ELEVENLABS_VOICE_ID_SHORT }}
+        run: npm run generate-audio
+
+      - name: Buscar clipes de stock (Pexels)
+        env:
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: npm run fetch-clips
+
+      # ── Fase de assets (modo manual OU complemento do automático) ─────────
+
+      - name: Baixar audio e clipes (modo manual)
         run: npm run fetch
+
+      # ── Render ────────────────────────────────────────────────────────────
 
       - name: Gerar legendas (whisper)
         env:
-          WHISPER_MODEL: small
+          WHISPER_MODEL: ${{ vars.WHISPER_MODEL || 'small' }}
         run: npm run transcribe
 
       - name: Renderizar videos
         run: npm run render
+
+      # ── Distribuição ──────────────────────────────────────────────────────
 
       - name: Subir no Google Drive
         env:
           GDRIVE_SA_JSON: ${{ secrets.GDRIVE_SA_JSON }}
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
         run: npm run upload
+
+      - name: Publicar no YouTube
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_PRIVACY: ${{ vars.YOUTUBE_PRIVACY || 'public' }}
+        run: npm run upload-youtube
 
       - name: Avisar o Make
         env:
