@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "studio": "remotion studio",
+    "select-theme": "node scripts/select-theme.mjs",
     "generate-content": "node scripts/generate-content.mjs",
     "generate-audio": "node scripts/generate-audio.mjs",
     "fetch-clips": "node scripts/fetch-clips.mjs",

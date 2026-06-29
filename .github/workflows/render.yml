@@ -48,14 +48,17 @@ jobs:
 
       - name: Gravar props.json
         env:
-          PAYLOAD: ${{ github.event.client_payload.row_id && toJSON(github.event.client_payload) || github.event.inputs.payload }}
+          PAYLOAD: ${{ github.event.client_payload && toJSON(github.event.client_payload) || github.event.inputs.payload || '{}' }}
         run: |
-          printf '%s' "$PAYLOAD" > props.json
-          echo "=== props.json recebido do Make.com ==="
+          printf '%s' "${PAYLOAD:-{}}" > props.json
+          echo "=== props.json inicial ==="
           cat props.json
           echo ""
 
       # ── Fase de criação de conteúdo (modo automático com "tema") ──────────
+
+      - name: Selecionar tema da planilha
+        run: npm run select-theme
 
       - name: Verificar secrets
         env:
