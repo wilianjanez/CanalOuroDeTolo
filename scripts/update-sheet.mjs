@@ -1,43 +1,43 @@
-// Atualiza o status do tema na planilha Google Sheets após o pipeline concluir.
-// Requer secrets: YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN
-// Requer secret: SHEETS_SPREADSHEET_ID (ID da planilha — parte da URL)
-// Variáveis opcionais:
-//   SHEETS_STATUS_COL   = coluna do Status          (padrão: D)
-//   SHEETS_DATE_COL     = coluna da Data publicação  (padrão: F)
-//   SHEETS_STATUS_VALUE = valor a gravar em Status   (padrão: publicado)
+// Atualiza o status do tema no temas/temas.xlsx local após o pipeline concluir.
+// Usa o row_id (número da linha, incluindo o cabeçalho) para localizar a linha.
+// Depois faz git commit + push de volta ao repositório.
 import fsp from 'node:fs/promises';
 import path from 'node:path';
-import {google} from 'googleapis';
+import {execSync} from 'node:child_process';
+import {readFileSync, writeFileSync} from 'node:fs';
+import {createRequire} from 'node:module';
+
+const require = createRequire(import.meta.url);
+const XLSX = require('xlsx');
 
 const ROOT = process.cwd();
+const SHEET_PATH = path.join(ROOT, 'temas', 'temas.xlsx');
 const BUILD = path.join(ROOT, 'build');
 
+// Colunas da planilha (letra da coluna → índice 0-based)
+const COL_STATUS = process.env.SHEETS_STATUS_COL  || 'D'; // Status
+const COL_DATE   = process.env.SHEETS_DATE_COL    || 'F'; // Data de publicação
+const COL_OBS    = process.env.SHEETS_OBS_COL     || 'G'; // Observações
+const STATUS_VAL = process.env.SHEETS_STATUS_VALUE || 'publicado';
+
+const colIndex = (letter) => letter.toUpperCase().charCodeAt(0) - 65; // A=0, B=1…
+
 const run = async () => {
-  const clientId = process.env.YOUTUBE_CLIENT_ID;
-  const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
-  const refreshToken = process.env.YOUTUBE_REFRESH_TOKEN;
-  const spreadsheetId = process.env.SHEETS_SPREADSHEET_ID;
-
-  if (!clientId || !clientSecret || !refreshToken || !spreadsheetId) {
-    console.log('Credenciais ou SHEETS_SPREADSHEET_ID não configurados — pulando atualização da planilha');
-    return;
-  }
-
   const props = JSON.parse(await fsp.readFile(path.join(ROOT, 'props.json'), 'utf8'));
-  const rowId = props.row_id;
+  const rowId = parseInt(props.row_id, 10);
 
-  if (!rowId) {
-    console.log('props.json sem row_id — pulando atualização da planilha');
+  if (!rowId || isNaN(rowId)) {
+    console.log('props.json sem row_id numérico — pulando atualização da planilha');
     return;
   }
 
-  const statusCol  = process.env.SHEETS_STATUS_COL   || 'D';
-  const dateCol    = process.env.SHEETS_DATE_COL     || 'F';
-  const statusVal  = process.env.SHEETS_STATUS_VALUE || 'publicado';
-
-  const auth = new google.auth.OAuth2(clientId, clientSecret, 'http://localhost');
-  auth.setCredentials({refresh_token: refreshToken});
-  const sheets = google.sheets({version: 'v4', auth});
+  // Verifica se o arquivo existe
+  try {
+    await fsp.access(SHEET_PATH);
+  } catch (_) {
+    console.log(`${SHEET_PATH} não encontrado — pulando atualização da planilha`);
+    return;
+  }
 
   // Lê YouTube URLs se disponíveis
   let youtubeResult = null;
@@ -47,46 +47,59 @@ const run = async () => {
 
   const today = new Date().toLocaleDateString('pt-BR');
 
-  // Atualiza Status e Data de publicação na mesma chamada
-  const updates = [
-    {
-      range: `${statusCol}${rowId}`,
-      values: [[statusVal]],
-    },
-    {
-      range: `${dateCol}${rowId}`,
-      values: [[today]],
-    },
-  ];
+  // Lê o workbook
+  const workbook = XLSX.readFile(SHEET_PATH);
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
 
-  // Se tiver URLs do YouTube, grava na coluna de Observações (G)
+  // Obtém o range atual para garantir que o range seja expandido se necessário
+  const ref = XLSX.utils.decode_range(sheet['!ref'] || 'A1:A1');
+
+  // Atualiza célula de Status
+  const statusCell = `${COL_STATUS}${rowId}`;
+  sheet[statusCell] = {t: 's', v: STATUS_VAL};
+
+  // Atualiza célula de Data
+  const dateCell = `${COL_DATE}${rowId}`;
+  sheet[dateCell] = {t: 's', v: today};
+
+  // Atualiza Observações com links do YouTube (se disponíveis)
   if (youtubeResult) {
-    const obsCol = process.env.SHEETS_OBS_COL || 'G';
     const links = [
       youtubeResult.longo?.url && `Longo: ${youtubeResult.longo.url}`,
       youtubeResult.short?.url && `Short: ${youtubeResult.short.url}`,
     ].filter(Boolean).join(' | ');
     if (links) {
-      updates.push({range: `${obsCol}${rowId}`, values: [[links]]});
+      const obsCell = `${COL_OBS}${rowId}`;
+      sheet[obsCell] = {t: 's', v: links};
     }
   }
 
-  await sheets.spreadsheets.values.batchUpdate({
-    spreadsheetId,
-    requestBody: {
-      valueInputOption: 'USER_ENTERED',
-      data: updates,
-    },
+  // Garante que o range inclui as novas células
+  const maxCol = Math.max(ref.e.c, colIndex(COL_OBS));
+  sheet['!ref'] = XLSX.utils.encode_range({
+    s: ref.s,
+    e: {r: Math.max(ref.e.r, rowId - 1), c: maxCol},
   });
 
-  console.log(`Planilha atualizada: linha ${rowId} → Status="${statusVal}", Data="${today}"`);
+  // Salva o workbook
+  XLSX.writeFile(workbook, SHEET_PATH);
+  console.log(`Planilha atualizada: linha ${rowId} → Status="${STATUS_VAL}", Data="${today}"`);
+
+  // Faz commit + push de volta ao repositório
+  try {
+    execSync('git config user.email "action@github.com"', {cwd: ROOT});
+    execSync('git config user.name "GitHub Actions"', {cwd: ROOT});
+    execSync(`git add temas/temas.xlsx`, {cwd: ROOT});
+    execSync(`git commit -m "chore: marca linha ${rowId} como ${STATUS_VAL} [skip ci]"`, {cwd: ROOT});
+    execSync(`git push`, {cwd: ROOT, env: {...process.env}});
+    console.log('Planilha salva no repositório com sucesso.');
+  } catch (e) {
+    console.warn('Aviso: não foi possível fazer commit da planilha:', e.message);
+  }
 };
 
 run().catch((e) => {
-  if (e?.errors?.length) {
-    console.warn(`Aviso: não foi possível atualizar a planilha: ${e.errors[0]?.message}`);
-  } else {
-    console.warn(`Aviso: não foi possível atualizar a planilha: ${e.message}`);
-  }
+  console.warn('Aviso: erro ao atualizar planilha:', e.message);
   // Não trava o pipeline
 });
