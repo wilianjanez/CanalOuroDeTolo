@@ -14,6 +14,7 @@
     "render-thumbnail": "node scripts/render-thumbnail.mjs",
     "upload": "node scripts/upload-drive.mjs",
     "upload-youtube": "node scripts/upload-youtube.mjs",
+    "update-sheet": "node scripts/update-sheet.mjs",
     "notify": "node scripts/notify-make.mjs",
     "setup-youtube-auth": "node scripts/setup-youtube-auth.mjs",
     "pipeline": "node scripts/generate-content.mjs && node scripts/generate-audio.mjs && node scripts/fetch-clips.mjs && node scripts/fetch-assets.mjs && node scripts/transcribe.mjs && node scripts/render.mjs && node scripts/render-thumbnail.mjs && node scripts/upload-drive.mjs && node scripts/upload-youtube.mjs && node scripts/notify-make.mjs"

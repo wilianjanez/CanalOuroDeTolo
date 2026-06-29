@@ -117,6 +117,14 @@ jobs:
           YOUTUBE_PRIVACY: ${{ vars.YOUTUBE_PRIVACY || 'public' }}
         run: npm run upload-youtube
 
+      - name: Atualizar planilha de temas
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          SHEETS_SPREADSHEET_ID: ${{ secrets.SHEETS_SPREADSHEET_ID }}
+        run: npm run update-sheet
+
       - name: Avisar o Make
         env:
           MAKE_CALLBACK_URL: ${{ secrets.MAKE_CALLBACK_URL }}
