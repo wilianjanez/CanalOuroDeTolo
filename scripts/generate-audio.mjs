@@ -134,6 +134,15 @@ const run = async () => {
     () => synthesizeEleven(props.roteiro_short, voiceIdShort, shortPath, elevenKey),
     props.roteiro_short, shortPath, voiceShort,
   );
+
+  // CTA de voz para o final do vídeo longo
+  const ctaText = 'Se inscreva no canal, curta o vídeo, deixe seu comentário e compartilhe com quem precisa ouvir isso!';
+  const ctaPath = path.join(PUB, 'audio/cta.mp3');
+  await withEdgeFallback(
+    'cta',
+    () => synthesizeEleven(ctaText, voiceIdLongo, ctaPath, elevenKey),
+    ctaText, ctaPath, voiceLongo,
+  );
 };
 
 run().catch((e) => {

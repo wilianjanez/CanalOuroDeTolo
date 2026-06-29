@@ -10,6 +10,32 @@ import {COLORS} from './components/Brand';
 
 const anton = loadAnton().fontFamily;
 
+const SubscribeTag: React.FC = () => {
+  const frame = useCurrentFrame();
+  const {width, height} = useVideoConfig();
+  const opacity = interpolate(frame, [0, 12], [0, 1], {extrapolateRight: 'clamp'});
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        bottom: height * 0.07,
+        left: 0,
+        right: 0,
+        textAlign: 'center',
+        fontFamily: anton,
+        fontSize: width * 0.1,
+        color: COLORS.gold,
+        letterSpacing: 4,
+        opacity,
+        textTransform: 'uppercase',
+        textShadow: '0 0 30px rgba(212,175,55,0.6), 0 4px 20px rgba(0,0,0,0.95)',
+      }}
+    >
+      ↓ Se inscreva ↓
+    </div>
+  );
+};
+
 const Gancho: React.FC<{texto: string}> = ({texto}) => {
   const frame = useCurrentFrame();
   const {width} = useVideoConfig();
@@ -41,6 +67,8 @@ export const Short: React.FC<VideoProps> = ({veredicto, audioSrc, clips, caption
   const ganchoLen = Math.round(fps * 3);
   const verdictStart = durationInFrames - Math.round(fps * 9);
   const verdictLen = Math.round(fps * 5);
+  const subscribeStart = durationInFrames - Math.round(fps * 3);
+  const subscribeLen = Math.round(fps * 3);
 
   return (
     <AbsoluteFill style={{backgroundColor: '#0E0E0E'}}>
@@ -56,6 +84,10 @@ export const Short: React.FC<VideoProps> = ({veredicto, audioSrc, clips, caption
 
       <Sequence from={verdictStart} durationInFrames={verdictLen}>
         <VerdictCard veredicto={veredicto} variant="short" />
+      </Sequence>
+
+      <Sequence from={subscribeStart} durationInFrames={subscribeLen}>
+        <SubscribeTag />
       </Sequence>
     </AbsoluteFill>
   );

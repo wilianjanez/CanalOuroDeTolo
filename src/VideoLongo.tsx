@@ -38,6 +38,7 @@ export const VideoLongo: React.FC<VideoProps> = ({
 
       <Sequence from={durationInFrames - outroLen} durationInFrames={outroLen}>
         <Outro />
+        <Audio src={staticFile('audio/cta.mp3')} />
       </Sequence>
     </AbsoluteFill>
   );
