@@ -49,7 +49,11 @@ jobs:
       - name: Gravar props.json
         env:
           PAYLOAD: ${{ github.event.client_payload.row_id && toJSON(github.event.client_payload) || github.event.inputs.payload }}
-        run: printf '%s' "$PAYLOAD" > props.json
+        run: |
+          printf '%s' "$PAYLOAD" > props.json
+          echo "=== props.json recebido do Make.com ==="
+          cat props.json
+          echo ""
 
       # ── Fase de criação de conteúdo (modo automático com "tema") ──────────
 
