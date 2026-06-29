@@ -87,19 +87,39 @@ const run = async () => {
   console.log(`Planilha atualizada: linha ${rowId} → Status="${STATUS_VAL}", Data="${today}"`);
 
   // Faz commit + push de volta ao repositório
-  try {
-    execSync('git config user.email "action@github.com"', {cwd: ROOT});
-    execSync('git config user.name "GitHub Actions"', {cwd: ROOT});
-    execSync(`git add temas/temas.xlsx`, {cwd: ROOT});
-    execSync(`git commit -m "chore: marca linha ${rowId} como ${STATUS_VAL} [skip ci]"`, {cwd: ROOT});
-    execSync(`git push`, {cwd: ROOT, env: {...process.env}});
-    console.log('Planilha salva no repositório com sucesso.');
-  } catch (e) {
-    console.warn('Aviso: não foi possível fazer commit da planilha:', e.message);
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) {
+    console.warn('GITHUB_TOKEN não disponível — planilha salva localmente mas não commitada');
+    return;
   }
+
+  execSync('git config user.email "action@github.com"', {cwd: ROOT, stdio: 'inherit'});
+  execSync('git config user.name "GitHub Actions"', {cwd: ROOT, stdio: 'inherit'});
+
+  // Usa token na URL para autenticar o push
+  execSync(
+    `git remote set-url origin https://x-access-token:${token}@github.com/wilianjanez/CanalOuroDeTolo.git`,
+    {cwd: ROOT, stdio: 'inherit'},
+  );
+
+  execSync(`git add temas/temas.xlsx`, {cwd: ROOT, stdio: 'inherit'});
+
+  // Se não houver mudança no arquivo, pula o commit
+  const status = execSync('git status --porcelain temas/temas.xlsx', {cwd: ROOT}).toString().trim();
+  if (!status) {
+    console.log('Planilha sem alterações detectadas — nada a commitar');
+    return;
+  }
+
+  execSync(
+    `git commit -m "chore: marca linha ${rowId} como ${STATUS_VAL} [skip ci]"`,
+    {cwd: ROOT, stdio: 'inherit'},
+  );
+  execSync('git push origin HEAD', {cwd: ROOT, stdio: 'inherit'});
+  console.log('✅ Planilha salva no repositório com sucesso.');
 };
 
 run().catch((e) => {
-  console.warn('Aviso: erro ao atualizar planilha:', e.message);
-  // Não trava o pipeline
+  console.error('ERRO ao atualizar planilha:', e.message);
+  process.exit(1); // agora falha o pipeline para ser visível nos logs
 });

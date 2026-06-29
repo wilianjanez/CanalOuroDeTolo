@@ -26,8 +26,12 @@ jobs:
   render:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    permissions:
+      contents: write   # necessário para git push da planilha atualizada
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-node@v4
         with:
