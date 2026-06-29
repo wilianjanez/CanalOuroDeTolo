@@ -52,38 +52,46 @@ const run = async () => {
   const sheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
 
-  // Obtém o range atual para garantir que o range seja expandido se necessário
-  const ref = XLSX.utils.decode_range(sheet['!ref'] || 'A1:A1');
+  // Diagnóstico: mostra o valor atual da célula de Status antes de alterar
+  const statusCellRef = `${COL_STATUS}${rowId}`;
+  const currentCell = sheet[statusCellRef];
+  console.log(`Célula alvo: ${statusCellRef} | Valor atual: "${currentCell?.v ?? '(vazia)'}"`);
 
-  // Atualiza célula de Status
-  const statusCell = `${COL_STATUS}${rowId}`;
-  sheet[statusCell] = {t: 's', v: STATUS_VAL};
+  // sheet_add_aoa é mais confiável que atribuição direta para cells existentes
+  XLSX.utils.sheet_add_aoa(sheet, [[STATUS_VAL]], {
+    origin: XLSX.utils.decode_cell(`${COL_STATUS}${rowId}`),
+  });
+  XLSX.utils.sheet_add_aoa(sheet, [[today]], {
+    origin: XLSX.utils.decode_cell(`${COL_DATE}${rowId}`),
+  });
 
-  // Atualiza célula de Data
-  const dateCell = `${COL_DATE}${rowId}`;
-  sheet[dateCell] = {t: 's', v: today};
-
-  // Atualiza Observações com links do YouTube (se disponíveis)
+  // Observações com links do YouTube
   if (youtubeResult) {
     const links = [
       youtubeResult.longo?.url && `Longo: ${youtubeResult.longo.url}`,
       youtubeResult.short?.url && `Short: ${youtubeResult.short.url}`,
     ].filter(Boolean).join(' | ');
     if (links) {
-      const obsCell = `${COL_OBS}${rowId}`;
-      sheet[obsCell] = {t: 's', v: links};
+      XLSX.utils.sheet_add_aoa(sheet, [[links]], {
+        origin: XLSX.utils.decode_cell(`${COL_OBS}${rowId}`),
+      });
     }
   }
 
-  // Garante que o range inclui as novas células
+  // Garante que o range da sheet inclui as novas células
+  const ref = XLSX.utils.decode_range(sheet['!ref'] || 'A1:A1');
   const maxCol = Math.max(ref.e.c, colIndex(COL_OBS));
   sheet['!ref'] = XLSX.utils.encode_range({
     s: ref.s,
     e: {r: Math.max(ref.e.r, rowId - 1), c: maxCol},
   });
 
-  // Salva o workbook
-  XLSX.writeFile(workbook, SHEET_PATH);
+  // Salva sem shared strings (bookSST:false) para evitar problemas de referência
+  XLSX.writeFile(workbook, SHEET_PATH, {bookSST: false});
+
+  // Verifica se a célula foi mesmo alterada
+  const afterCell = sheet[statusCellRef];
+  console.log(`Célula após escrita: ${statusCellRef} = "${afterCell?.v}"`);
   console.log(`Planilha atualizada: linha ${rowId} → Status="${STATUS_VAL}", Data="${today}"`);
 
   // Faz commit + push de volta ao repositório
