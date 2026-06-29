@@ -7,13 +7,16 @@ name: render-ouro-de-tolo
 # Modo automático (tema): client_payload = { "row_id": "...", "tema": "...", "veredicto": "PIRITA" }
 # Modo manual (URLs): client_payload com audio_longo_url, audio_short_url, clipes_longo[], clipes_short[]
 on:
+  schedule:
+    # Roda todos os dias às 09:00 horário de Brasília (12:00 UTC)
+    - cron: '0 12 * * *'
   repository_dispatch:
     types: [render]
   workflow_dispatch:
     inputs:
       payload:
-        description: 'JSON de props (para teste manual)'
-        required: true
+        description: 'JSON de props (para teste manual, opcional)'
+        required: false
 
 concurrency:
   group: render-${{ github.event.client_payload.row_id || github.run_id }}
