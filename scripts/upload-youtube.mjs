@@ -9,7 +9,7 @@ const ROOT = process.cwd();
 const OUT = path.join(ROOT, 'out');
 const BUILD = path.join(ROOT, 'build');
 
-const uploadVideo = async (youtube, file, title, description, tags, isShort) => {
+const uploadVideo = async (youtube, file, title, description, tags, isShort, thumbnailFile) => {
   const filePath = path.join(OUT, file);
   const stat = await fsp.stat(filePath);
   console.log(`Subindo ${file} (${(stat.size / 1024 / 1024).toFixed(1)} MB) para o YouTube...`);
@@ -44,6 +44,28 @@ const uploadVideo = async (youtube, file, title, description, tags, isShort) => 
   const id = res.data.id;
   const url = `https://www.youtube.com/watch?v=${id}`;
   console.log(`OK: ${url}`);
+
+  // Sobe thumbnail se o arquivo existir
+  if (thumbnailFile) {
+    const thumbPath = path.join(OUT, thumbnailFile);
+    const thumbExists = await fsp.access(thumbPath).then(() => true).catch(() => false);
+    if (thumbExists) {
+      try {
+        await youtube.thumbnails.set({
+          videoId: id,
+          media: {
+            mimeType: 'image/jpeg',
+            body: fs.createReadStream(thumbPath),
+          },
+        });
+        console.log(`Thumbnail definida: ${thumbnailFile}`);
+      } catch (e) {
+        // Canal não verificado ou quota — não trava o pipeline
+        console.warn(`Aviso: thumbnail não pôde ser definida: ${e?.errors?.[0]?.reason || e.message}`);
+      }
+    }
+  }
+
   return {id, url};
 };
 
@@ -70,6 +92,7 @@ const run = async () => {
     props.descricao_youtube_longo || '',
     props.tags || [],
     false,
+    'thumbnail_longo.jpg',
   );
 
   const shortResult = await uploadVideo(
@@ -79,6 +102,7 @@ const run = async () => {
     props.descricao_youtube_short || '',
     props.tags || [],
     true,
+    'thumbnail_short.jpg',
   );
 
   const result = {row_id: props.row_id, longo: longoResult, short: shortResult};

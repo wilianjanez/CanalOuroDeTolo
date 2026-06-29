@@ -1,8 +1,9 @@
 import React from 'react';
-import {Composition} from 'remotion';
+import {Composition, Still} from 'remotion';
 import {VideoLongo} from './VideoLongo';
 import {Short} from './Short';
-import {videoSchema, VideoProps, FPS} from './schema';
+import {Thumbnail} from './components/Thumbnail';
+import {videoSchema, thumbnailSchema, VideoProps, FPS} from './schema';
 
 const defaults: VideoProps = {
   titulo: 'Exemplo',
@@ -42,6 +43,22 @@ export const RemotionRoot: React.FC = () => {
         defaultProps={{...defaults, audioSrc: 'audio/short.mp3'}}
         durationInFrames={1800}
         calculateMetadata={({props}) => ({durationInFrames: durationFrom(props, 0.2)})}
+      />
+      <Still
+        id="ThumbnailLongo"
+        component={Thumbnail}
+        schema={thumbnailSchema}
+        width={1280}
+        height={720}
+        defaultProps={{titulo: 'Consórcio é Investimento?', veredicto: 'PIRITA'}}
+      />
+      <Still
+        id="ThumbnailShort"
+        component={Thumbnail}
+        schema={thumbnailSchema}
+        width={1280}
+        height={720}
+        defaultProps={{titulo: 'Consórcio é Golpe?', veredicto: 'PIRITA'}}
       />
     </>
   );

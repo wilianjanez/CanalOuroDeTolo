@@ -20,3 +20,10 @@ export type VideoProps = z.infer<typeof videoSchema>;
 export type Caption = z.infer<typeof captionSchema>;
 
 export const FPS = 30;
+
+export const thumbnailSchema = z.object({
+  titulo: z.string().default('Título do Vídeo'),
+  veredicto: z.enum(['OURO', 'PIRITA', 'MISTO']).default('PIRITA'),
+});
+
+export type ThumbnailProps = z.infer<typeof thumbnailSchema>;
